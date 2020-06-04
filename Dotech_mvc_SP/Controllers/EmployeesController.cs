@@ -81,30 +81,36 @@ namespace Dotech_mvc_SP.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Employees employees = db.Employees.Find(id);
-            if (employees == null)
+            Shippers llamar_sp_de_id = null;
+            //conexiom
+            using (NorthwindEntities db = new NorthwindEntities())
             {
-                return HttpNotFound();
+                //
+                SqlParameter parametro_id = new SqlParameter("@id", id);
+                //llamar al sp que trae un solo elemento
+                llamar_sp_de_id = db.Database.SqlQuery<Shippers>("exec sp_getShipp @id", parametro_id).SingleOrDefault();
             }
-            ViewBag.ReportsTo = new SelectList(db.Employees, "EmployeeID", "LastName", employees.ReportsTo);
-            return View(employees);
+
+            return View(llamar_sp_de_id);
         }
 
         // POST: Employees/Edit/5
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que desea enlazarse. Para obtener 
-        // más información vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath")] Employees employees)
+        public ActionResult Edit(Shippers shippers, int id)
         {
-            if (ModelState.IsValid)
+            using (NorthwindEntities db = new NorthwindEntities())
             {
-                db.Entry(employees).State = EntityState.Modified;
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                //sp_updateUsuariosLogin @id, @companyName, @phone  
+                //llamar parametros
+                SqlParameter _id = new SqlParameter("@id", id);
+                SqlParameter companyName = new SqlParameter("@companyName", shippers.CompanyName);
+                SqlParameter phone = new SqlParameter("@phone", shippers.Phone);
+                //llamar sp 
+                var sp_update = db.Database.ExecuteSqlCommand("SP_UPDATE @id, @companyName, @phone",
+                    _id, companyName, phone);
             }
-            ViewBag.ReportsTo = new SelectList(db.Employees, "EmployeeID", "LastName", employees.ReportsTo);
-            return View(employees);
+            return RedirectToAction("Index");
         }
 
         // GET: Employees/Delete/5
