@@ -120,12 +120,17 @@ namespace Dotech_mvc_SP.Controllers
             {
                 return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
             }
-            Employees employees = db.Employees.Find(id);
-            if (employees == null)
+            Shippers llamar_sp_de_id = null;
+            //conexiom
+            using (NorthwindEntities db = new NorthwindEntities())
             {
-                return HttpNotFound();
+                //
+                SqlParameter parametro_id = new SqlParameter("@id", id);
+                //llamar al sp que trae un solo elemento
+                llamar_sp_de_id = db.Database.SqlQuery<Shippers>("exec sp_getShipp @id", parametro_id).SingleOrDefault();
             }
-            return View(employees);
+
+            return View(llamar_sp_de_id);
         }
 
         // POST: Employees/Delete/5
@@ -133,9 +138,15 @@ namespace Dotech_mvc_SP.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            Employees employees = db.Employees.Find(id);
-            db.Employees.Remove(employees);
-            db.SaveChanges();
+            //conectar fuera
+            using (NorthwindEntities db = new NorthwindEntities())
+            {
+                //parametros
+                SqlParameter _id = new SqlParameter("@id", id);
+                //llamar al sp
+                var eliminar = db.Database.ExecuteSqlCommand("exec sp_borrar_ship @id", _id);
+            }
+
             return RedirectToAction("Index");
         }
 
