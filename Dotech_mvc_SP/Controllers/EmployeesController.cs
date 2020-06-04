@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Net;
 using System.Web;
@@ -46,26 +47,31 @@ namespace Dotech_mvc_SP.Controllers
         // GET: Employees/Create
         public ActionResult Create()
         {
-            ViewBag.ReportsTo = new SelectList(db.Employees, "EmployeeID", "LastName");
             return View();
         }
 
         // POST: Employees/Create
-        // Para protegerse de ataques de publicación excesiva, habilite las propiedades específicas a las que desea enlazarse. Para obtener 
-        // más información vea https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "EmployeeID,LastName,FirstName,Title,TitleOfCourtesy,BirthDate,HireDate,Address,City,Region,PostalCode,Country,HomePhone,Extension,Photo,Notes,ReportsTo,PhotoPath")] Employees employees)
+        public ActionResult Create(Shippers shippers)
         {
             if (ModelState.IsValid)
             {
-                db.Employees.Add(employees);
-                db.SaveChanges();
-                return RedirectToAction("Index");
+                using (NorthwindEntities db = new NorthwindEntities())
+                {
+                    //definir los parametros (eso se hace primero)
+                    SqlParameter companyName = new SqlParameter("@companyName", shippers.CompanyName);
+                    SqlParameter phone = new SqlParameter("@phone", shippers.Phone);
+
+                    //llamar al sp de insercion
+                    var sp_insertar = db.Database.
+                        ExecuteSqlCommand("EXEC SP_INSERTAR_SHIPP  @companyName,@phone",
+                        companyName, phone);
+                }
+                    return RedirectToAction("Index");
             }
 
-            ViewBag.ReportsTo = new SelectList(db.Employees, "EmployeeID", "LastName", employees.ReportsTo);
-            return View(employees);
+            return View(shippers);
         }
 
         // GET: Employees/Edit/5
